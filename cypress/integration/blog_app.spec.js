@@ -1,13 +1,13 @@
 describe('Blog app', function () {
   beforeEach(function () {
-    cy.request('POST', 'http://localhost:3003/api/testing/reset');
+    cy.request('POST', '/api/testing/reset');
     const user = {
       username: 'yoshi',
       name: 'Yoshi Tester',
       password: '1234',
     };
-    cy.request('POST', 'http://localhost:3003/api/users', user);
-    cy.visit('http://localhost:3000');
+    cy.request('POST', '/api/users', user);
+    cy.visit('/');
   });
 
   it('Login form is shown', function () {
@@ -104,7 +104,7 @@ describe('Blog app', function () {
           name: 'Other User',
           password: '1234',
         };
-        cy.request('POST', 'http://localhost:3003/api/users', otherUser);
+        cy.request('POST', '/api/users', otherUser);
         cy.login({ username: 'otherUser', password: '1234' });
         cy.contains('my test blog Cypress').click();
         cy.get('[data-testid=remove-btn]').should('not.exist');
