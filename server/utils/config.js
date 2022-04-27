@@ -7,4 +7,6 @@ const MONGODB_URI =
     ? process.env.TEST_MONGODB_URI
     : process.env.MONGODB_URI;
 
-module.exports = { PORT, MONGODB_URI };
+const IN_PRODUCTION = process.env.NODE_ENV === 'production';
+
+module.exports = { IN_PRODUCTION, PORT, MONGODB_URI };
