@@ -9,7 +9,11 @@ module.exports = {
     'jest/globals': true,
     'cypress/globals': true,
   },
-  extends: ['eslint:recommended', 'plugin:react/recommended'],
+  extends: [
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:prettier/recommended', // / Make sure this is always the last element in the array.
+  ],
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
@@ -17,8 +21,9 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
   },
-  plugins: ['react', 'jest', 'cypress'],
+  plugins: ['react', 'jest', 'cypress', 'prettier'],
   rules: {
+    'prettier/prettier': 'error',
     indent: ['error', 2, { SwitchCase: 1 }],
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single', { avoidEscape: true }],
