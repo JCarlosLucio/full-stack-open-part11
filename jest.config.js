@@ -12,5 +12,4 @@ module.exports = {
       testMatch: ['**/server/**/*.test.js'],
     },
   ],
-  testTimeout: 60000, // Increase the global default Jest timeout
 };
