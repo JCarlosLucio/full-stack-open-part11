@@ -1,0 +1,7 @@
+POST http://localhost:3003/api/blogs/60e4972fc5cc830c59cb9558/comments
+Content-Type: application/json
+Authorization: bearer <YOUR TOKEN>
+
+{
+  "content": "my second comment"
+}

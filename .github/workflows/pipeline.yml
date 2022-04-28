@@ -1,0 +1,102 @@
+name: Deployment pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+
+jobs:
+  simple_deployment_pipeline:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: npm install
+        run: npm install
+
+      - name: lint
+        run: npm run eslint
+
+      - name: build
+        run: npm run build
+
+      - name: test
+        env:
+          PORT: ${{ secrets.PORT }}
+          TEST_MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }}
+          SECRET: ${{ secrets.SECRET }}
+        run: npm test
+
+      - name: e2e tests
+        env:
+          PORT: ${{ secrets.PORT }}
+          TEST_MONGODB_URI: ${{ secrets.TEST_MONGODB_URI }}
+          SECRET: ${{ secrets.SECRET }}
+        uses: cypress-io/github-action@v2
+        with:
+          command: npm run test:e2e
+          start: npm run start:test
+          wait-on: 'http://localhost:${{ env.PORT }}'
+
+      - name: Heroku deployment
+        uses: akhileshns/heroku-deploy@v3.12.12
+        if:
+          github.event_name == 'push' && !contains(join(github.event.commits.*.message), '#skip')
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: 'tranquil-hamlet-59064'
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          healthcheck: 'https://tranquil-hamlet-59064.herokuapp.com/health'
+          checkstring: 'ok'
+          rollbackonhealthcheckfailed: true
+        env:
+          HD_MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          HD_PORT: ${{ secrets.PORT }}
+          HD_SECRET: ${{ secrets.SECRET }}
+
+      - name: Build failure notification
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if: failure()
+        with:
+          severity: error
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+          avatarUrl: https://github.githubassets.com/images/modules/logos_page/Octocat.png
+          text: 'Build failed :sob:'
+          details:
+            commit ${{ github.event.commits[0].url }} by ${{
+            github.event.commits[0].committer.username }} broke the build :(
+
+  tag_release:
+    needs: [simple_deployment_pipeline]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@ce4b5ffa38e072fa7a901e417253c438fcc2ccce
+        if:
+          github.event_name == 'push' && !contains(join(github.event.commits.*.message), '#skip')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEFAULT_BUMP: patch
+
+      - name: New version notification
+        uses: rjstone/discord-webhook-notify@89b0bf43c2c8514f70d0dcba4a706b904e8a3112
+        if:
+          success() && github.event_name == 'push' && !contains(join(github.event.commits.*.message), '#skip')
+        with:
+          severity: info
+          webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
+          avatarUrl: https://github.githubassets.com/images/modules/logos_page/Octocat.png
+          description:
+            to https://tranquil-hamlet-59064.herokuapp.com/ by ${{
+            github.event.commits[0].committer.username }}
+          text: 'A new version of Bloglist deployed :partying_face:'
