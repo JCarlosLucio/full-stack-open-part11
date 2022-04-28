@@ -42,7 +42,7 @@ jobs:
         with:
           command: npm run test:e2e
           start: npm run start:test
-          wait-on: http://localhost:$PORT
+          wait-on: 'http://localhost:$PORT'
 
       - name: Heroku deployment
         uses: akhileshns/heroku-deploy@v3.12.12
